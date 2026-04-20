@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Black Hole</title>
+
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: Orbitron, sans-serif;
+  color: cyan;
+}
+
+/* UI LEFT */
+.ui {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 250px;
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
+  border: 1px solid cyan;
+  border-radius: 10px;
+  box-shadow: 0 0 15px cyan;
+}
+
+/* INFO RIGHT */
+.info {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  width: 300px;
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
+  border: 1px solid cyan;
+  border-radius: 10px;
+  box-shadow: 0 0 15px cyan;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid cyan;
+  color: cyan;
+  cursor: pointer;
+}
+
+button:hover {
+  background: cyan;
+  color: black;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LEFT PANEL -->
+<div class="ui">
+  <h3>📡 Control Panel</h3>
+  <button onclick="moveIn()">Move Closer</button>
+  <button onclick="moveOut()">Move Away</button>
+  <button onclick="resetView()">Reset View</button>
+
+  <h4>Transmission</h4>
+  <form id="form">
+    <input type="text" id="name" placeholder="Name" required>
+    <button type="submit">Send</button>
+  </form>
+  <p id="status"></p>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="info" id="infoBox">
+  <h3>🕳️ Black Hole Data</h3>
+  <p>Click the black hole to scan data...</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+const geometry = new THREE.SphereGeometry(2, 64, 64);
+const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const blackHole = new THREE.Mesh(geometry, material);
+scene.add(blackHole);
+const ringGeo = new THREE.TorusGeometry(3, 0.3, 16, 100);
+const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+const ring = new THREE.Mesh(ringGeo, ringMat);
+scene.add(ring);
+const starsGeometry = new THREE.BufferGeometry();
+const starVertices = [];
+for (let i = 0; i < 15000; i++) {
+  starVertices.push(
+    (Math.random() - 0.5) * 2000,
+    (Math.random() - 0.5) * 2000,
+    (Math.random() - 0.5) * 2000
+  );
+}
+starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+const starField = new THREE.Points(starsGeometry, starsMaterial);
+scene.add(starField);
+camera.position.z = 10;
+function animate() {
+  requestAnimationFrame(animate);
+  ring.rotation.x += 0.01;
+  ring.rotation.y += 0.01;
+  starField.rotation.y += 0.0005;
+  renderer.render(scene, camera);
+}
+animate();
+function moveIn() { camera.position.z -= 1; }
+function moveOut() { camera.position.z += 1; }
+function resetView() { camera.position.z = 10; }
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+window.addEventListener("click", (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObject(blackHole);
+  if (intersects.length > 0) {
+    showBlackHoleInfo();
+  }
+});
+// INFO FUNCTION
+function showBlackHoleInfo() {
+  document.getElementById("infoBox").innerHTML = `
+    <h3>🕳️ Black Hole Scan Complete</h3>
+
+    <h4>📌 What is a Black Hole?</h4>
+    <p>
+      A black hole is a region of spacetime where gravity is so strong that nothing,
+      not even light, can escape. It forms when massive stars collapse.
+    </p>
+
+    <h4>⚛️ Structure</h4>
+    <ul>
+      <li><b>Singularity:</b> Infinite density core</li>
+      <li><b>Event Horizon:</b> Point of no return</li>
+      <li><b>Accretion Disk:</b> Superheated orbiting matter</li>
+    </ul>
+
+    <h4>🌌 Types</h4>
+    <ul>
+      <li>Stellar</li>
+      <li>Supermassive</li>
+      <li>Intermediate</li>
+      <li>Primordial (theoretical)</li>
+    </ul>
+
+    <h4>🔥 Hawking Radiation</h4>
+    <p>
+      Quantum effects allow black holes to emit radiation and slowly evaporate.
+    </p>
+
+    <h4>📊 Scan Data</h4>
+    <p><b>Type:</b> Stellar Black Hole</p>
+    <p><b>Mass:</b> ~10 × Sun</p>
+    <p><b>Radius:</b> ~30 km</p>
+    <p><b>Temperature:</b> Near absolute zero</p>
+
+    <h4>🧠 Facts</h4>
+    <ul>
+      <li>Time slows near it</li>
+      <li>Light bends around it</li>
+      <li>It can evaporate over time</li>
+    </ul>
+  `;
+}
+document.getElementById("form").addEventListener("submit", function(e){
+  e.preventDefault();
+  const name = document.getElementById("name").value;
+  document.getElementById("status").innerText =
+    "🚀 Signal sent, " + name;
+  this.reset();
+});
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
